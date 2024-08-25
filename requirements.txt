@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+alembic
+asyncpg
+sqlalchemy==2.0.32
+psycopg2-binary
+pydantic-settings

@@ -1,0 +1,51 @@
+services:
+  web:
+    build: .
+    command: bash -c 'while !</dev/tcp/db/5432; do sleep 1; done; uvicorn app.main:app --host 0.0.0.0'
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    expose:
+      - 5432
+    depends_on:
+      - db
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fastapi.rule=Host(`localhost`)"
+    networks:
+      - appNet
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=kimioshi
+      - POSTGRES_PASSWORD="70615302"
+      - POSTGRES_DB=restapi
+    networks:
+      - appNet
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U kimioshi -d restapi" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+  traefik:
+    image: traefik:v2.9.6
+    ports:
+      - 8008:80
+      - 8081:8080
+    volumes:
+      - "./traefik.dev.toml:/etc/traefik/traefik.toml"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - appNet
+
+volumes:
+  postgres_data:
+
+networks:
+  appNet:
+    driver: bridge
